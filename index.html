@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Dublino 18–23 luglio 2026 · Guida di famiglia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Source+Sans+3:wght@400;600;700&family=Spline+Sans+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+:root{
+  --ink:#221a12;            /* stout scuro */
+  --ink-soft:#5c5348;
+  --paper:#f4f6f1;          /* bruma di mare irlandese */
+  --card:#ffffff;
+  --mist:#dde4db;
+  --green:#0b5f3b;          /* verde bottiglia */
+  --green-soft:#e3efe7;
+  --door-blue:#2456a6;      /* porte georgiane */
+  --door-red:#c33427;
+  --door-yellow:#d99a17;
+  --door-green:#2e7d4f;
+  --brass:#a8792b;          /* ottone dei batacchi */
+  --radius:14px;
+  --shadow:0 1px 2px rgba(34,26,18,.07),0 6px 18px rgba(34,26,18,.06);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  font-family:"Source Sans 3",system-ui,-apple-system,sans-serif;
+  background:var(--paper);color:var(--ink);
+  font-size:16px;line-height:1.55;
+  padding-bottom:calc(76px + env(safe-area-inset-bottom));
+}
+.wrap{max-width:680px;margin:0 auto;padding:0 16px}
+
+/* ---------- header ---------- */
+header{
+  background:linear-gradient(180deg,#123524 0%,#0b5f3b 100%);
+  color:#f2f6ef;padding:26px 0 20px;position:relative;overflow:hidden;
+}
+header .wrap{position:relative;z-index:1}
+.fanlight{
+  position:absolute;top:-70px;left:50%;transform:translateX(-50%);
+  width:340px;height:170px;border-radius:0 0 170px 170px;
+  border:2px solid rgba(255,255,255,.14);border-top:none;pointer-events:none;
+}
+.fanlight::before,.fanlight::after{
+  content:"";position:absolute;inset:14px;border-radius:0 0 160px 160px;
+  border:1px solid rgba(255,255,255,.10);border-top:none;
+}
+.fanlight::after{inset:30px}
+.eyebrow{font-family:"Spline Sans Mono",monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#bcd9c6}
+h1{font-family:Fraunces,serif;font-weight:700;font-size:30px;line-height:1.12;margin:6px 0 4px}
+.sub{font-size:14px;color:#cfe3d5;max-width:46ch}
+.flightbar{
+  display:flex;gap:8px;margin-top:14px;font-family:"Spline Sans Mono",monospace;font-size:11.5px;
+}
+.flightbar span{
+  background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.16);
+  padding:5px 10px;border-radius:999px;white-space:nowrap;
+}
+
+/* ---------- tab bar ---------- */
+nav.tabs{
+  position:fixed;bottom:0;left:0;right:0;z-index:1000;
+  background:rgba(255,255,255,.94);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  border-top:1px solid var(--mist);
+  display:flex;justify-content:space-around;
+  padding:8px 6px calc(8px + env(safe-area-inset-bottom));
+}
+nav.tabs button{
+  flex:1;background:none;border:none;font:inherit;color:var(--ink-soft);
+  font-size:11px;font-weight:600;display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:4px 0;border-radius:10px;cursor:pointer;
+}
+nav.tabs button .ic{font-size:20px;line-height:1}
+nav.tabs button.on{color:var(--green)}
+nav.tabs button.on .ic{transform:translateY(-1px)}
+
+/* ---------- sections ---------- */
+section.pane{display:none;padding-top:18px}
+section.pane.on{display:block}
+h2{font-family:Fraunces,serif;font-weight:600;font-size:22px;margin:10px 0 4px}
+h3{font-family:Fraunces,serif;font-weight:600;font-size:17px;margin:0 0 2px}
+.lead{color:var(--ink-soft);font-size:14.5px;margin-bottom:14px}
+
+/* ---------- day doors ---------- */
+.doors{display:flex;gap:8px;overflow-x:auto;padding:4px 0 12px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.doors::-webkit-scrollbar{display:none}
+.door{
+  min-width:86px;border:none;cursor:pointer;font:inherit;color:#fff;
+  border-radius:44px 44px 10px 10px;padding:18px 8px 10px;text-align:center;
+  box-shadow:var(--shadow);position:relative;opacity:.55;transition:opacity .15s, transform .15s;
+}
+.door::before{ /* fanlight della porta */
+  content:"";position:absolute;top:5px;left:50%;transform:translateX(-50%);
+  width:44px;height:22px;border-radius:44px 44px 0 0;
+  border:1.5px solid rgba(255,255,255,.55);border-bottom:none;
+}
+.door::after{ /* batacchio */
+  content:"";position:absolute;bottom:26px;left:50%;transform:translateX(-50%);
+  width:7px;height:7px;border-radius:50%;background:rgba(255,235,190,.9);
+}
+.door.on{opacity:1;transform:translateY(-2px)}
+.door .dnum{font-family:"Spline Sans Mono",monospace;font-size:10px;letter-spacing:.12em;display:block}
+.door .dlab{font-family:Fraunces,serif;font-weight:600;font-size:14px;display:block;margin-top:14px}
+.d-blue{background:var(--door-blue)}.d-red{background:var(--door-red)}
+.d-yellow{background:var(--door-yellow)}.d-green{background:var(--door-green)}
+.d-ink{background:#33302c}.d-brass{background:var(--brass)}
+
+.daycard{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px 16px;margin-bottom:14px}
+.daytitle{display:flex;justify-content:space-between;align-items:baseline;gap:10px;border-bottom:1px solid var(--mist);padding-bottom:10px;margin-bottom:6px}
+.daytitle .meta{font-family:"Spline Sans Mono",monospace;font-size:11px;color:var(--ink-soft);white-space:nowrap}
+.step{display:grid;grid-template-columns:56px 1fr;gap:12px;padding:12px 0;border-bottom:1px dashed var(--mist)}
+.step:last-child{border-bottom:none}
+.step .t{font-family:"Spline Sans Mono",monospace;font-size:12.5px;font-weight:500;color:var(--green);padding-top:2px}
+.step .t.nap{color:var(--brass)}
+.step p{font-size:14.5px;color:var(--ink-soft);margin-top:2px}
+.step .why{
+  margin-top:8px;background:var(--green-soft);border-left:3px solid var(--green);
+  border-radius:0 8px 8px 0;padding:8px 10px;font-size:13.5px;color:#28402f;
+}
+.step .why b{color:#123524}
+.naptag{display:inline-block;background:#f7ecd8;color:#7a5a1c;border-radius:6px;font-size:11px;font-weight:700;padding:1px 7px;letter-spacing:.04em;margin-left:6px;vertical-align:2px}
+.pubtag{display:inline-block;background:#efe3e0;color:#8a2f24;border-radius:6px;font-size:11px;font-weight:700;padding:1px 7px;letter-spacing:.04em;margin-left:6px;vertical-align:2px}
+.maplink{font-size:13px;font-weight:600;color:var(--door-blue);text-decoration:none}
+.maplink:active{opacity:.6}
+
+/* ---------- POI ---------- */
+.searchrow{display:flex;gap:8px;margin-bottom:10px}
+.searchrow input{
+  flex:1;border:1px solid var(--mist);border-radius:12px;padding:11px 14px;font:inherit;font-size:15px;background:var(--card);
+}
+.searchrow input:focus{outline:2px solid var(--green);outline-offset:1px}
+.chips{display:flex;gap:7px;overflow-x:auto;padding-bottom:12px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{
+  border:1px solid var(--mist);background:var(--card);color:var(--ink-soft);
+  font:inherit;font-size:13px;font-weight:600;padding:7px 13px;border-radius:999px;white-space:nowrap;cursor:pointer;
+}
+.chip.on{background:var(--ink);border-color:var(--ink);color:#fff}
+.poi{
+  background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);
+  padding:15px 16px;margin-bottom:11px;
+}
+.poi .head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;cursor:pointer}
+.poi .cats{font-size:12px;color:var(--ink-soft);margin-top:1px}
+.poi .star{color:var(--brass);font-size:15px}
+.poi .body{display:none;margin-top:10px;border-top:1px solid var(--mist);padding-top:10px}
+.poi.open .body{display:block}
+.poi .body p{font-size:14.5px;margin-bottom:8px}
+.poi .why2{background:var(--green-soft);border-radius:8px;padding:9px 11px;font-size:13.5px;color:#28402f;margin-bottom:8px}
+.poi .tip{background:#f7ecd8;border-radius:8px;padding:9px 11px;font-size:13.5px;color:#6d5117;margin-bottom:8px}
+.facts{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.facts span{font-family:"Spline Sans Mono",monospace;font-size:11px;background:var(--paper);border:1px solid var(--mist);border-radius:6px;padding:3px 8px;color:var(--ink-soft)}
+.actions{display:flex;gap:14px}
+.actions a{font-size:13.5px;font-weight:700;color:var(--door-blue);text-decoration:none}
+.count{font-size:13px;color:var(--ink-soft);margin-bottom:10px}
+
+/* ---------- map ---------- */
+#map{height:62vh;min-height:380px;border-radius:var(--radius);box-shadow:var(--shadow);background:var(--mist)}
+.legend{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px;font-size:12.5px;color:var(--ink-soft)}
+.legend i{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:4px;vertical-align:-1px}
+.mapfail{padding:14px;background:#fdf3f1;border:1px solid #ecd2cc;border-radius:12px;color:#7c3a2d;font-size:14px;display:none;margin-top:10px}
+
+/* ---------- pratico ---------- */
+.block{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;margin-bottom:13px}
+.block h3{margin-bottom:8px}
+.block p,.block li{font-size:14.5px;color:var(--ink-soft)}
+.block ul{padding-left:18px;display:grid;gap:6px}
+.block b{color:var(--ink)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+td,th{padding:7px 4px;border-bottom:1px solid var(--mist);text-align:left;vertical-align:top}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft)}
+td:last-child,th:last-child{text-align:right;white-space:nowrap;font-family:"Spline Sans Mono",monospace;font-size:12.5px}
+.check{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px dashed var(--mist);cursor:pointer}
+.check:last-child{border-bottom:none}
+.check input{width:19px;height:19px;accent-color:var(--green);margin-top:2px;flex-shrink:0}
+.check.done label{text-decoration:line-through;color:#9a9287}
+.check label{font-size:14.5px;cursor:pointer}
+.check label small{display:block;color:var(--brass);font-family:"Spline Sans Mono",monospace;font-size:11px;margin-top:1px}
+.note{font-size:12.5px;color:var(--ink-soft);margin-top:10px;font-style:italic}
+footer{padding:26px 16px 10px;text-align:center;font-size:12px;color:var(--ink-soft)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="fanlight"></div>
+  <div class="wrap">
+    <div class="eyebrow">Guida di famiglia · edizione privata</div>
+    <h1>Dublino, cinque giorni<br>fra libri, foche e pinte</h1>
+    <p class="sub">Itinerario ragionato per due docenti e una viaggiatrice di sei anni. Base: Staycity City Quay, riva sud del Liffey.</p>
+    <div class="flightbar">
+      <span>✈ FR9612 · FCO→DUB · 18/07 · 19:15→21:30</span>
+      <span>✈ FR9611 · DUB→FCO · 23/07 · 12:35</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+<!-- ============ GIORNI ============ -->
+<section class="pane on" id="pane-days">
+  <h2>Itinerario giorno per giorno</h2>
+  <p class="lead">Ogni giornata ha un tema, un riposino programmato e un pub alla giusta ora. Toccate una porta per aprire il giorno.</p>
+
+  <div class="doors" id="doors">
+    <button class="door d-ink"    data-day="0"><span class="dnum">SAB 18</span><span class="dlab">Arrivo</span></button>
+    <button class="door d-blue on" data-day="1"><span class="dnum">DOM 19</span><span class="dlab">Il canone</span></button>
+    <button class="door d-green"  data-day="2"><span class="dnum">LUN 20</span><span class="dlab">Lo zoo</span></button>
+    <button class="door d-yellow" data-day="3"><span class="dnum">MAR 21</span><span class="dlab">Il mare</span></button>
+    <button class="door d-red"    data-day="4"><span class="dnum">MER 22</span><span class="dlab">I vichinghi</span></button>
+    <button class="door d-brass"  data-day="5"><span class="dnum">GIO 23</span><span class="dlab">Partenza</span></button>
+  </div>
+
+  <!-- DAY 0 -->
+  <div class="daycard day" data-day="0" hidden>
+    <div class="daytitle"><h3>Sabato 18 · L'arrivo</h3><span class="meta">atterraggio 21:30</span></div>
+    <div class="step"><span class="t">19:15</span><div><b>Decollo da Fiumicino.</b><p>Prima d'imbarcarvi: check-in online Staycity già completato (obbligatorio), app FreeNow installata per i taxi dublinesi, una merenda per la bimba nello zaino.</p></div></div>
+    <div class="step"><span class="t">21:30</span><div><b>Atterraggio a Dublin Airport (T1).</b><p>Ryanair usa il Terminal 1. Controllo passaporti UE rapido, bagagli, e dritti alla fila taxi ufficiale fuori dagli arrivi.</p></div></div>
+    <div class="step"><span class="t">22:00</span><div><b>Taxi verso Moss Street.</b><p>25–30 minuti di sera, €28–40. Ditelo così: <i>"Staycity City Quay, Moss Street"</i>. Il bus 757 esiste ma non è serata da esperimenti.</p></div></div>
+    <div class="step"><span class="t">22:40</span><div><b>Chiavi, appartamento, nanna.</b><p>Il pantry della reception (24h) ha latte, cereali e l'essenziale per la colazione di domattina. Prendete ora quello che serve.</p>
+    <div class="why"><b>Perché conta:</b> a Dublino d'estate il sole tramonta alle 21:50 — atterrerete con l'ultima luce sulla baia. Sedetevi a sinistra dell'aereo se potete.</div></div></div>
+  </div>
+
+  <!-- DAY 1 -->
+  <div class="daycard day" data-day="1">
+    <div class="daytitle"><h3>Domenica 19 · Il canone dublinese</h3><span class="meta">tutto a piedi · ≤15 min a tratta</span></div>
+    <div class="step"><span class="t">09:00</span><div><b>Colazione in appartamento, poi a piedi verso Trinity.</b><p>Dieci minuti lungo il fiume. Passate da Sweny's Pharmacy (Lincoln Place): la farmacia dell'<i>Ulisse</i>, ancora con il sapone al limone di Bloom. Aprono più tardi, ma la vetrina merita.</p></div></div>
+    <div class="step"><span class="t">09:30</span><div><b>Trinity College — Book of Kells Experience e Long Room</b> <a class="maplink" href="https://maps.apple.com/?ll=53.3439,-6.2568&q=Trinity%20College%20Long%20Room" target="_blank">→ mappa</a><p>Primo slot prenotato: vangeli miniati dell'800 d.C., poi la Long Room con l'arpa di Brian Boru e il globo Gaia sospeso. 60–75 minuti.</p>
+    <div class="why"><b>Perché conta:</b> il Book of Kells è il vertice dell'arte insulare — miniature a spirale che fondono cristianesimo e orizzonte celtico. Alla bimba raccontatelo come "il libro che i monaci nascosero ai vichinghi": è filologicamente difendibile e funziona.</div></div></div>
+    <div class="step"><span class="t">11:00</span><div><b>Grafton Street e dintorni.</b><p>Buskers, la statua di Molly Malone (foto di rito), e per voi due una deviazione da Hodges Figgis (1768), la libreria citata nell'<i>Ulisse</i>. Scaffale di studi irlandesi al primo piano.</p></div></div>
+    <div class="step"><span class="t">12:30</span><div><b>Picnic a St Stephen's Green.</b><p>Prendete qualcosa da un deli di Grafton St. Anatre, il ponte di O'Connell, il busto di Joyce che guarda la sua Newman House.</p></div></div>
+    <div class="step"><span class="t nap">14:00</span><div><b>Riposino sul prato</b> <span class="naptag">RIPOSINO</span><p>Coperta all'ombra. Chi resta sveglio dei due può fare un salto al parco giochi recintato (lato Grafton) o semplicemente leggere. Un'ora buona.</p></div></div>
+    <div class="step"><span class="t">15:30</span><div><b>Opzione accademica: National Gallery of Ireland (gratis).</b><p>Venti minuti mirati, non di più, con la bimba: la <i>Cattura di Cristo</i> di Caravaggio — ritrovata nel 1990 in un refettorio gesuita di Dublino — e il Vermeer. Ingresso libero, passeggini benvenuti.</p></div></div>
+    <div class="step"><span class="t">17:30</span><div><b>Cena da O'Neill's, Suffolk Street</b> <span class="pubtag">PUB</span> <a class="maplink" href="https://maps.apple.com/?ll=53.3439,-6.2608&q=O%27Neills%20Pub" target="_blank">→ mappa</a><p>Labirinto vittoriano su tre piani, carvery abbondante, famiglie di casa a quest'ora. Roast con contorni ~€20, porzioni da dividere con la bimba.</p></div></div>
+    <div class="step"><span class="t">19:00</span><div><b>Temple Bar con la luce lunga.</b><p>Attraversatelo ora, quando è colore e musica dai portoni e non ancora bolgia. Ha'penny Bridge per rientrare lungo la riva nord. A casa per le 20:30.</p></div></div>
+  </div>
+
+  <!-- DAY 2 -->
+  <div class="daycard day" data-day="2" hidden>
+    <div class="daytitle"><h3>Lunedì 20 · Lo zoo e il parco</h3><span class="meta">Luas linea rossa · biglietti zoo online</span></div>
+    <div class="step"><span class="t">09:00</span><div><b>Luas rossa da Abbey Street → Heuston, poi 10 min a piedi.</b><p>Il tram è già un'attrazione per la bimba. Con la Leap Card salite e basta.</p></div></div>
+    <div class="step"><span class="t">09:30</span><div><b>Dublin Zoo dall'apertura</b> <a class="maplink" href="https://maps.apple.com/?ll=53.3572,-6.3071&q=Dublin%20Zoo" target="_blank">→ mappa</a><p>Gli animali sono attivi al mattino: orangutan sulle funi sopra la testa, leoni marini, la savana africana. Aree gioco e fontanelle d'acqua gratuite ovunque. Quattro ore piene, pranzo dentro o all'uscita.</p>
+    <div class="why"><b>Perché conta:</b> fondato nel 1831, è fra i più antichi zoo scientifici d'Europa — e il leone del logo MGM (Slats, 1919) nacque qui. Da decenni è centro di conservazione più che esibizione: si vede nel disegno degli habitat.</div></div></div>
+    <div class="step"><span class="t nap">14:00</span><div><b>Phoenix Park: prato, daini, riposino</b> <span class="naptag">RIPOSINO</span><p>Il parco recintato più grande d'Europa (707 ha). Dal Visitor Centre verso i Fifteen Acres si incontrano i daini in libertà — osservare a distanza, non nutrire. Caffè al centro visite, coperta, pisolino.</p></div></div>
+    <div class="step"><span class="t">16:30</span><div><b>Rientro col Luas.</b><p>Doccia e relax in appartamento. Cena in casa: la spesa al Tesco Express di Pearse St è a 5 minuti.</p></div></div>
+    <div class="step"><span class="t">20:30</span><div><b>Jolly serale (se la bimba regge):</b><p>DART fino a Sandymount, 8 minuti: la marea bassa sulla spiaggia dell'episodio III dell'<i>Ulisse</i> ("Ineluctable modality of the visible…"), col tramonto delle 21:45. Andata e ritorno in un'ora e mezza.</p></div></div>
+  </div>
+
+  <!-- DAY 3 -->
+  <div class="daycard day" data-day="3" hidden>
+    <div class="daytitle"><h3>Martedì 21 · Il mare: Howth</h3><span class="meta">DART da Tara St · 25 min · scambiabile col mercoledì se piove</span></div>
+    <div class="step"><span class="t">09:20</span><div><b>DART da Tara Street (5 min dall'hotel), direzione Howth.</b><p>Sedetevi a destra: la linea corre sulla baia, con Bull Island e le colline di Howth che crescono davanti.</p></div></div>
+    <div class="step"><span class="t">10:00</span><div><b>West Pier: le foche</b> <a class="maplink" href="https://maps.apple.com/?ll=53.3911,-6.0707&q=Howth%20West%20Pier" target="_blank">→ mappa</a><p>Le foche grigie pattugliano il porto aspettando gli scarti dei pescherecci: per la bimba è il momento della vacanza. Weekend market vicino alla stazione se aperto.</p></div></div>
+    <div class="step"><span class="t">11:00</span><div><b>Assaggio di Cliff Walk.</b><p>Non serve il giro completo: 30–40 minuti sul primo tratto del sentiero (partenza dal porto est) bastano per la vista su Ireland's Eye e i ciuffi d'erica. Scarpe comode, sentiero facile ma da mano nella mano nei punti alti.</p>
+    <div class="why"><b>Perché conta:</b> a Howth Head Leopold Bloom ricevette il "sì" di Molly fra i rododendri — la pagina che chiude l'<i>Ulisse</i>. Ci fu davvero, con Nora Barnacle, il 16 giugno 1904.</div></div></div>
+    <div class="step"><span class="t">12:30</span><div><b>Fish & chips da Beshoff Bros sul porto.</b><p>Dinastia di friggitori dal 1913 (il capostipite fu marinaio sulla Potëmkin, letteralmente). Merluzzo del giorno, mangiato sulle panchine guardando le barche.</p></div></div>
+    <div class="step"><span class="t nap">14:30</span><div><b>DART di rientro e riposino vero in appartamento</b> <span class="naptag">RIPOSINO</span><p>La giornata di mare stanca: 15:00–17:00 tutti in orizzontale. Doccia, e freschi per la serata più bella.</p></div></div>
+    <div class="step"><span class="t">18:00</span><div><b>The Brazen Head</b> <span class="pubtag">PUB</span> <a class="maplink" href="https://maps.apple.com/?ll=53.3449,-6.2763&q=The%20Brazen%20Head" target="_blank">→ mappa</a><p>Locanda dal 1198: cortile, cimeli, tre piani. Prenotate il tavolo. Irish stew, bangers & mash, apple crumble. La musica parte in serata: cenando alle 18 ve ne godete l'inizio e uscite col coprifuoco-bimbi delle 21.</p>
+    <div class="why"><b>Perché conta:</b> qui si riunivano gli United Irishmen; Robert Emmet ci preparò la sollevazione del 1803. Il pub compare anche nell'<i>Ulisse</i> ("you get a decent enough do in the Brazen Head").</div></div></div>
+  </div>
+
+  <!-- DAY 4 -->
+  <div class="daycard day" data-day="4" hidden>
+    <div class="daytitle"><h3>Mercoledì 22 · Vichinghi, emigranti, sessione</h3><span class="meta">giornata quasi tutta al coperto · anti-pioggia perfetta</span></div>
+    <div class="step"><span class="t">10:00</span><div><b>Dublinia</b> <a class="maplink" href="https://maps.apple.com/?ll=53.3431,-6.2721&q=Dublinia" target="_blank">→ mappa</a><p>Il museo che prende sul serio i bambini senza banalizzare: la Dublino vichinga e medievale ricostruita con case, odori, costumi da provare, rune. Salite sulla torre di St Michael alla fine. Biglietto combinato con EPIC conviene.</p>
+    <div class="why"><b>Perché conta:</b> Dubh Linn, "stagno nero": la città nasce come porto scandinavo di schiavi e argento nell'841. Gli scavi di Wood Quay (proprio qui sotto) furono negli anni '70 il più importante sito vichingo urbano d'Europa — e la sua distruzione per far posto agli uffici comunali resta una ferita civica di cui i dublinesi parlano ancora.</div></div></div>
+    <div class="step"><span class="t">12:00</span><div><b>Christ Church Cathedral, di passaggio.</b><p>Il ponte coperto che la lega a Dublinia è già la foto. Dentro: la cripta normanna (la più grande delle isole britanniche) e, curiosità irresistibile a 6 anni, il gatto e il topo mummificati trovati nell'organo — "Tom & Jerry".</p></div></div>
+    <div class="step"><span class="t nap">13:00</span><div><b>Pranzo a casa, riposino, prime valigie</b> <span class="naptag">RIPOSINO</span><p>Siete a 15 minuti a piedi. Pausa vera fino alle 15.</p></div></div>
+    <div class="step"><span class="t">15:30</span><div><b>EPIC — The Irish Emigration Museum</b> <a class="maplink" href="https://maps.apple.com/?ll=53.3483,-6.2482&q=EPIC%20Museum" target="_blank">→ mappa</a><p>Dietro l'angolo di casa vostra, nei magazzini doganali del 1820. Passaporto da timbrare in 20 gallerie: la bimba colleziona, voi leggete. Fuori, la Jeanie Johnston, replica di una nave della Grande Carestia.</p>
+    <div class="why"><b>Perché conta:</b> 10 milioni di partenze dal 1800: l'Irlanda è l'unico paese europeo con meno abitanti oggi che nel 1841. EPIC racconta la diaspora come matrice culturale — da Wilde a Beckett ai 22 presidenti USA con avi irlandesi. Museo europeo più votato agli World Travel Awards per anni di fila.</div></div></div>
+    <div class="step"><span class="t">18:00</span><div><b>Cena veloce sui quays.</b><p>J.R. Mahon's sul Burgh Quay è a due passi ed è l'opzione pratica; oppure di nuovo in casa, leggeri, per arrivare puntuali al gran finale.</p></div></div>
+    <div class="step"><span class="t">19:00</span><div><b>The Cobblestone, Smithfield</b> <span class="pubtag">PUB</span> <a class="maplink" href="https://maps.apple.com/?ll=53.3498,-6.2778&q=The%20Cobblestone" target="_blank">→ mappa</a><p>Taxi da casa (10 min). "A drinking pub with a music problem": la sessione di musica tradizionale è suonata in cerchio, per sé, non per il pubblico. Niente cucina: solo pinte, e fra le più oneste della città. Un'ora e mezza, poi taxi e a nanna.</p>
+    <div class="why"><b>Perché conta:</b> gestito dalla famiglia Mulligan da cinque generazioni, è l'ultimo presidio della tradizione orale musicale nel centro città — la mobilitazione popolare che nel 2021 lo salvò da un progetto alberghiero è già storia culturale dublinese. Questo, non Temple Bar, è il suono vero.</div></div></div>
+  </div>
+
+  <!-- DAY 5 -->
+  <div class="daycard day" data-day="5" hidden>
+    <div class="daytitle"><h3>Giovedì 23 · La partenza</h3><span class="meta">volo 12:35 · check-out entro le 11</span></div>
+    <div class="step"><span class="t">08:00</span><div><b>Colazione con calma, ultime valigie.</b><p>Svuotate il frigo, caricate i dispositivi, boarding pass Ryanair già sul telefono.</p></div></div>
+    <div class="step"><span class="t">09:15</span><div><b>Taxi per l'aeroporto.</b><p>Prenotatelo con FreeNow dalla sera prima per le 9:15. 25–35 minuti a quell'ora: siete al T1 entro le 10, ai controlli entro le 10:15 — margine giusto per un Ryanair delle 12:35 in alta stagione.</p></div></div>
+    <div class="step"><span class="t">12:35</span><div><b>FR9611 → Fiumicino, arrivo 16:40.</b><p>Sedetevi a destra al decollo: ultima vista sulla baia, su Howth e — se la giornata è limpida — sulle montagne di Wicklow. Slán abhaile: buon rientro.</p></div></div>
+  </div>
+</section>
+
+<!-- ============ POI ============ -->
+<section class="pane" id="pane-poi">
+  <h2>I luoghi, uno per uno</h2>
+  <p class="lead">Ventidue schede ragionate: filtrate per categoria o cercate. ⭐ = imperdibile assoluto. Toccate una scheda per aprirla.</p>
+  <div class="searchrow"><input type="search" id="q" placeholder="Cerca un luogo, un tema, una parola…" aria-label="Cerca"></div>
+  <div class="chips" id="chips">
+    <button class="chip on" data-cat="all">Tutti</button>
+    <button class="chip" data-cat="star">⭐ Imperdibili</button>
+    <button class="chip" data-cat="kid">🧒 Per la bimba</button>
+    <button class="chip" data-cat="museo">🏛 Musei & cultura</button>
+    <button class="chip" data-cat="libri">📚 Dublino letteraria</button>
+    <button class="chip" data-cat="pub">🍺 Pub</button>
+    <button class="chip" data-cat="fuori">🌊 Fuori porta</button>
+  </div>
+  <div class="count" id="count"></div>
+  <div id="poilist"></div>
+</section>
+
+<!-- ============ MAPPA ============ -->
+<section class="pane" id="pane-map">
+  <h2>La mappa</h2>
+  <p class="lead">Tutti i luoghi della guida, colorati per categoria. Toccate un segnaposto e poi "Apri in Mappe" per la navigazione dal vostro iPhone.</p>
+  <div id="map" role="application" aria-label="Mappa dei luoghi"></div>
+  <div class="mapfail" id="mapfail">La mappa richiede una connessione internet. I luoghi restano tutti consultabili nella sezione "Luoghi", con link diretto ad Apple Maps.</div>
+  <div class="legend">
+    <span><i style="background:#a8792b"></i>Imperdibile</span>
+    <span><i style="background:#2456a6"></i>Museo/cultura</span>
+    <span><i style="background:#c33427"></i>Pub</span>
+    <span><i style="background:#2e7d4f"></i>Parchi & bimba</span>
+    <span><i style="background:#33302c"></i>Fuori porta</span>
+  </div>
+</section>
+
+<!-- ============ PRATICO ============ -->
+<section class="pane" id="pane-info">
+  <h2>Il quaderno pratico</h2>
+  <p class="lead">Trasporti, regole dei pub, budget, prenotazioni con scadenza e cassetta degli attrezzi.</p>
+
+  <div class="block">
+    <h3>Prenotazioni — la checklist</h3>
+    <div id="checks">
+      <div class="check"><input type="checkbox" id="c1"><label for="c1">Check-in online Staycity (obbligatorio) <small>prima del 18/07 · staycity.com</small></label></div>
+      <div class="check"><input type="checkbox" id="c2"><label for="c2">Book of Kells Experience — primo slot di domenica 19 <small>subito: luglio esaurisce · visittrinity.ie</small></label></div>
+      <div class="check"><input type="checkbox" id="c3"><label for="c3">Dublin Zoo — biglietti online (sconto e salta-coda) <small>entro il 17/07 · dublinzoo.ie</small></label></div>
+      <div class="check"><input type="checkbox" id="c4"><label for="c4">Biglietto combinato Dublinia + EPIC <small>entro il 20/07 · dublinia.ie / epicchq.com</small></label></div>
+      <div class="check"><input type="checkbox" id="c5"><label for="c5">Tavolo al Brazen Head, martedì 21 ore 18:00 <small>entro il 19/07 · brazenhead.com</small></label></div>
+      <div class="check"><input type="checkbox" id="c6"><label for="c6">Leap Visitor Card 72h ×2 adulti + Child Leap <small>all'arrivo in aeroporto, o WHSmith T1</small></label></div>
+      <div class="check"><input type="checkbox" id="c7"><label for="c7">Check-in Ryanair andata e ritorno <small>app Ryanair · si apre 24–48h prima</small></label></div>
+      <div class="check"><input type="checkbox" id="c8"><label for="c8">Taxi per l'aeroporto, giovedì 23 ore 9:15 <small>prenotare la sera del 22 · app FreeNow</small></label></div>
+    </div>
+    <p class="note">Le spunte non vengono salvate alla chiusura della pagina: usatela come lista di lavoro in una sessione, o stampatela.</p>
+  </div>
+
+  <div class="block">
+    <h3>Bambini nei pub: la regola</h3>
+    <p>Per legge irlandese (Intoxicating Liquor Act 2003) i minori accompagnati dai genitori possono stare nei pub <b>fino alle 21:00</b> (d'estate fino alle 22:00 a discrezione del gestore). Il vostro schema — cena 17:30/18:00, musica, fuori entro le 21 — è esattamente come fanno le famiglie irlandesi. Nessuno vi guarderà storto: vi porteranno i pastelli.</p>
+  </div>
+
+  <div class="block">
+    <h3>Muoversi</h3>
+    <ul>
+      <li><b>Leap Visitor Card 72h — €22/adulto:</b> copre DART (Howth, Sandymount), Luas (zoo) e tutti i bus. Per la bimba: Child Leap o biglietti ridotti singoli. Attivatela martedì mattina se volete coprire i giorni 21–23, o all'arrivo se preferite la comodità totale.</li>
+      <li><b>DART:</b> la vostra stazione è <b>Tara Street</b>, 5 minuti a piedi. Direzione Howth ogni ~15 min.</li>
+      <li><b>Luas rossa:</b> fermata Abbey Street (oltre il ponte). Per lo zoo: scendere a Heuston, 10 min a piedi dentro il parco.</li>
+      <li><b>Taxi:</b> app FreeNow. Centro→aeroporto €25–40. Di sera con la bimba: sempre taxi, senza sensi di colpa.</li>
+      <li><b>A piedi:</b> dal City Quay siete a 7 min da Trinity, 10 da Temple Bar, 5 da EPIC. La città buona è tutta in un miglio.</li>
+    </ul>
+  </div>
+
+  <div class="block">
+    <h3>Budget di massima (3 persone)</h3>
+    <table>
+      <tr><th>Voce</th><th>Stima</th></tr>
+      <tr><td>Taxi aeroporto A/R + taxi serali</td><td>€90–120</td></tr>
+      <tr><td>Leap Card 72h ×2 + corse bimba</td><td>€50–60</td></tr>
+      <tr><td>Trinity / Book of Kells (famiglia)</td><td>€50–65</td></tr>
+      <tr><td>Dublin Zoo (famiglia, online)</td><td>€55–65</td></tr>
+      <tr><td>Dublinia + EPIC (combo famiglia)</td><td>€70–85</td></tr>
+      <tr><td>2 cene al pub + 1 fish & chips</td><td>€120–150</td></tr>
+      <tr><td>Spesa per colazioni e cene in casa</td><td>€80–100</td></tr>
+      <tr><td>Pinte, caffè, gelati, imprevisti</td><td>€80–100</td></tr>
+      <tr><td><b>Totale extra-alloggio</b></td><td><b>€595–745</b></td></tr>
+    </table>
+    <p class="note">Prezzi da verificare sui siti ufficiali: sono stime di luglio 2026, alta stagione. La pinta viaggia sui €6,50–7,50; al Cobblestone meno.</p>
+  </div>
+
+  <div class="block">
+    <h3>Meteo e valigia di luglio</h3>
+    <ul>
+      <li>15–20 °C, luce dalle 5:15 alle 21:50, scrosci improvvisi anche col sole: <b>k-way leggeri sempre nello zaino</b>, mai l'ombrello grande (il vento vince).</li>
+      <li>Strati: t-shirt + felpa + guscio. Scarpe comode già rodate; un cambio scarpe per la bimba.</li>
+      <li>Crema solare: il sole irlandese inganna, soprattutto a Howth.</li>
+      <li>Adattatore prese tipo G (UK). Un solo multipresa italiano + un adattatore risolve tutto.</li>
+    </ul>
+  </div>
+
+  <div class="block">
+    <h3>Se piove forte</h3>
+    <p>Scambiate Howth (martedì) con la giornata al coperto (mercoledì). Riserve indoor mai citate abbastanza: la <b>Chester Beatty</b> (manoscritti da tutto il mondo, gratis, sorprendentemente adatta ai bambini col percorso-scoperta), la <b>National Gallery</b> (gratis) e il <b>Museo di Storia Naturale</b>, il "Dead Zoo" vittoriano (gratis — verificate le sale aperte, è in ristrutturazione a fasi).</p>
+  </div>
+
+  <div class="block">
+    <h3>Numeri e frasi</h3>
+    <ul>
+      <li><b>Emergenze:</b> 112 (o 999). <b>Ambasciata d'Italia:</b> 63–65 Northumberland Rd, +353 1 660 1744.</li>
+      <li><b>Farmacie:</b> Boots e Hickey's su O'Connell St, aperte fino a sera.</li>
+      <li><i>Sláinte!</i> ("slàn-cia") = cin cin · <i>Go raibh maith agat</i> = grazie · <i>Céad míle fáilte</i> = centomila benvenuti — lo troverete scritto ovunque.</li>
+      <li>La spina della Guinness va fatta riposare a due terzi: se il barista si ferma, non è distratto — è liturgia. Attendere senza toccare il bicchiere.</li>
+    </ul>
+  </div>
+</section>
+
+</main>
+
+<footer>Guida privata di famiglia · Dublino 18–23 luglio 2026 · fatta con cura, da verificare sui siti ufficiali prima dell'uso</footer>
+
+<nav class="tabs" role="tablist">
+  <button class="on" data-pane="days"><span class="ic">🚪</span>Giorni</button>
+  <button data-pane="poi"><span class="ic">📍</span>Luoghi</button>
+  <button data-pane="map"><span class="ic">🗺️</span>Mappa</button>
+  <button data-pane="info"><span class="ic">🧭</span>Pratico</button>
+</nav>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+/* ================= DATA ================= */
+const POIS=[
+{n:"Trinity College · Book of Kells & Long Room",cats:["star","museo","libri"],lat:53.3439,lng:-6.2568,time:"60–75 min",price:"€€€ · prenotare",area:"College Green",
+ why:"Il vertice dell'arte insulare (800 d.C.) e la biblioteca-cattedrale con l'arpa di Brian Boru, simbolo nazionale. Il nuovo allestimento immersivo funziona anche per i bambini.",
+ tip:"Primo slot del mattino: la Long Room quasi vuota è un'altra esperienza. Biglietti su visittrinity.ie, esauriscono in luglio.",kid:2},
+{n:"Dublin Zoo",cats:["star","kid"],lat:53.3572,lng:-6.3071,time:"4 ore",price:"€€€ · online conviene",area:"Phoenix Park",
+ why:"Fondato nel 1831, oggi centro di conservazione fra i migliori d'Europa. Il leone della MGM nacque qui. Habitat aperti, savana africana, orangutan sulle funi aeree.",
+ tip:"Arrivare alle 9:30 in punto: animali attivi e vialetti liberi. Fontanelle d'acqua gratuite: portate le borracce.",kid:3},
+{n:"Howth · porto, foche e Cliff Walk",cats:["star","fuori","kid","libri"],lat:53.3911,lng:-6.0707,time:"mezza giornata",price:"solo il DART",
+ why:"Villaggio di pescatori a 25 min di treno. Foche grigie nel porto, il faro, e il promontorio dove Joyce ambienta il 'sì' finale dell'Ulisse.",
+ tip:"West Pier per le foche verso le 10–11, quando rientrano i pescherecci. Fish & chips da Beshoff Bros, dinastia dal 1913.",kid:3},
+{n:"EPIC · The Irish Emigration Museum",cats:["star","museo","kid"],lat:53.3483,lng:-6.2482,time:"2 ore",price:"€€ · combo con Dublinia",
+ why:"La diaspora irlandese — 10 milioni di partenze — raccontata come matrice culturale, nei magazzini doganali del 1820. Pluripremiato agli World Travel Awards.",
+ tip:"È a 5 minuti dal vostro hotel. Il passaporto da timbrare in 20 gallerie tiene la bimba agganciata fino in fondo. Biglietto rivalido entro 10 giorni.",kid:3},
+{n:"Dublinia",cats:["star","museo","kid"],lat:53.3431,lng:-6.2721,time:"90 min",price:"€€",
+ why:"La Dublino vichinga e medievale ricostruita sopra Wood Quay, il più importante scavo vichingo urbano d'Europa. Interattività intelligente, non giocattolosa.",
+ tip:"Costumi da provare e rune da scrivere: lasciatele il tempo. Chiudete salendo sulla torre di St Michael per il panorama.",kid:3},
+{n:"The Cobblestone",cats:["star","pub"],lat:53.3498,lng:-6.2778,time:"1–2 ore",price:"€ · solo pinte",
+ why:"L'ultimo presidio della tradizione musicale orale in centro: sessione in cerchio ogni sera, gestione familiare Mulligan da cinque generazioni. Salvato dai dublinesi nel 2021.",
+ tip:"Niente cucina: cenate prima. Con la bimba: arrivo alle 19, angolo vicino ai musicisti, fuori entro le 21. Non applaudite a metà set: si annuisce.",kid:1},
+{n:"The Brazen Head",cats:["star","pub","libri"],lat:53.3449,lng:-6.2763,time:"cena",price:"€€",
+ why:"Locanda dal 1198, ritrovo degli United Irishmen e citata nell'Ulisse. Turistica il giusto, ma con sostanza storica vera e cucina solida.",
+ tip:"Prenotare il tavolo (70 minuti di slot nelle ore di punta). Irish stew e apple crumble. Musica dal tardo pomeriggio.",kid:2},
+{n:"St Stephen's Green",cats:["kid","libri"],lat:53.3373,lng:-6.2591,time:"1–2 ore",price:"gratis",
+ why:"Il salotto verde vittoriano della città, coi segni dei proiettili della Rivolta di Pasqua 1916 ancora sull'arco Fusiliers. Busto di Joyce incluso.",
+ tip:"Parco giochi recintato sul lato di Grafton St. Perfetto per il riposino su coperta del primo giorno.",kid:3},
+{n:"Phoenix Park & Visitor Centre",cats:["kid"],lat:53.3661,lng:-6.331,time:"2 ore",price:"gratis",
+ why:"707 ettari, il parco urbano recintato più grande d'Europa, con branco di daini in libertà dal Seicento.",
+ tip:"Daini verso i Fifteen Acres: osservare a 50 metri, mai nutrire. Caffè e bagni al Visitor Centre.",kid:3},
+{n:"National Gallery of Ireland",cats:["museo"],lat:53.3408,lng:-6.2525,time:"45–90 min",price:"gratis",
+ why:"La 'Cattura di Cristo' di Caravaggio — riscoperta nel 1990 in un refettorio gesuita di Dublino — più Vermeer, Goya e la sala Yeats.",
+ tip:"Con la bimba: visita chirurgica di 30 minuti su 3 opere. Ingresso da Clare St, a 10 min dall'hotel.",kid:1},
+{n:"Chester Beatty",cats:["museo","star"],lat:53.3425,lng:-6.2674,time:"60–90 min",price:"gratis",
+ why:"Una delle grandi collezioni di manoscritti del mondo — papiri biblici, Corani miniati, rotoli giapponesi — donata alla nazione da un magnate minerario. Per due accademici, il museo più sottovalutato d'Irlanda.",
+ tip:"Nei giardini di Dublin Castle. Percorsi-scoperta per bambini alla reception; roof garden per decomprimere.",kid:2},
+{n:"Marsh's Library (1707)",cats:["museo","libri"],lat:53.3394,lng:-6.2706,time:"30–45 min",price:"€",
+ why:"La prima biblioteca pubblica d'Irlanda, intatta da tre secoli: scaffali di quercia, gabbie di lettura, i libri di Swift con le sue annotazioni al margine.",
+ tip:"Accanto a St Patrick's. Piccola, silenziosa, aperture limitate: verificate gli orari. La bimba cercherà le 'gabbie dei lettori' come una caccia al tesoro.",kid:1},
+{n:"Sweny's Pharmacy",cats:["libri"],lat:53.3417,lng:-6.2503,time:"15 min",price:"offerta libera",
+ why:"La farmacia del capitolo 5 dell'Ulisse, conservata dai volontari come santuario joyciano: si compra ancora il sapone al limone di Leopold Bloom.",
+ tip:"A due passi dal vostro hotel. Se trovate aperto, i volontari leggono Joyce ad alta voce: entrate. Il sapone è il souvenir perfetto per colleghi di dipartimento.",kid:1},
+{n:"Hodges Figgis",cats:["libri"],lat:53.3419,lng:-6.2578,time:"30 min",price:"—",
+ why:"Libreria dal 1768, citata nell'Ulisse. Il piano di Irish Studies è una bibliografia ragionata fatta negozio.",
+ tip:"Dawson Street. Sezione bambini ottima per un libro-ricordo in inglese alla bimba.",kid:2},
+{n:"Ha'penny Bridge",cats:["star"],lat:53.3464,lng:-6.2633,time:"5 min",price:"gratis",
+ why:"Il ponte pedonale in ghisa del 1816, così chiamato per il pedaggio di mezzo penny. L'icona della città.",
+ tip:"Attraversatelo al crepuscolo (21:15 in luglio) rientrando verso casa lungo i quays.",kid:2},
+{n:"Christ Church Cathedral",cats:["museo"],lat:53.3434,lng:-6.271,time:"45 min",price:"€€",
+ why:"Fondazione hiberno-norrena (1030), cripta normanna più grande delle isole. Contiene il presunto cuore di San Lorenzo O'Toole e i celebri gatto e topo mummificati.",
+ tip:"'Tom & Jerry' nella cripta: vittoria assicurata con la bimba. Combinabile con Dublinia via ponte coperto.",kid:2},
+{n:"Temple Bar (di giorno)",cats:["kid"],lat:53.3454,lng:-6.2646,time:"45 min",price:"gratis",
+ why:"Il quartiere della vita notturna, ma con la luce lunga della sera estiva è colore, buskers e ciottoli.",
+ tip:"Attraversarlo alle 19, mai cenarci (prezzi doppi). La pinta 'obbligatoria' fatela altrove: Mulligan's è a 3 minuti da casa vostra.",kid:2},
+{n:"Mulligan's, Poolbeg Street",cats:["pub","libri"],lat:53.3462,lng:-6.2551,time:"1 pinta",price:"€",
+ why:"Dal 1782, per molti dublinesi la Guinness migliore della città. Compare in 'Counterparts' dei Dubliners di Joyce; JFK ci lavorò accanto da giovane reporter.",
+ tip:"È IL vostro pub di quartiere: 3 minuti dall'hotel. Perfetto per la pinta di coppia quando la bimba dorme e uno dei due la veglia — a turni, sera per sera.",kid:0},
+{n:"The Long Hall",cats:["pub"],lat:53.3421,lng:-6.2653,time:"1 pinta",price:"€€",
+ why:"Interno vittoriano del 1881 pressoché intatto: specchi, mogano, lampadari. Fra i pub più belli d'Irlanda, punto.",
+ tip:"South Great George's St. Passateci nel pomeriggio del giorno 1 per un mezzo bicchiere di ammirazione, anche solo dieci minuti.",kid:1},
+{n:"Sandymount Strand",cats:["fuori","libri","kid"],lat:53.3346,lng:-6.2137,time:"1,5 ore",price:"solo il DART",
+ why:"La spiaggia sterminata della bassa marea dell'episodio III dell'Ulisse. Al tramonto estivo, con le ciminiere di Poolbeg sullo sfondo, è la Dublino più fotogenica.",
+ tip:"Jolly serale: DART 8 minuti, tramonto alle 21:45. Controllate l'orario di marea: con l'alta marea la spiaggia scompare.",kid:2},
+{n:"14 Henrietta Street",cats:["museo"],lat:53.3517,lng:-6.2699,time:"75 min · solo visite guidate",price:"€€",
+ why:"Una casa georgiana raccontata per strati: da palazzo aristocratico (1740) a tenement con 100 inquilini (1911). Il museo di storia sociale più premiato e commovente della città.",
+ tip:"Solo su prenotazione, posti limitati: se vi avanza uno slot il mercoledì mattina, è l'alternativa colta a Dublinia per voi due (meno adatta alla bimba: valutate).",kid:1},
+{n:"Museo di Storia Naturale · il 'Dead Zoo'",cats:["museo","kid"],lat:53.3403,lng:-6.2528,time:"45 min",price:"gratis",
+ why:"Museo vittoriano 'del museo': vetrine del 1857 con i giganteschi cervi irlandesi estinti all'ingresso. I bambini lo adorano da 160 anni.",
+ tip:"In ristrutturazione a fasi: verificate su museum.ie quali sale sono aperte. Se lo è, riserva anti-pioggia perfetta accanto alla National Gallery.",kid:3}
+];
+
+/* ================= TABS ================= */
+const tabs=document.querySelectorAll("nav.tabs button");
+const panes=document.querySelectorAll("section.pane");
+let mapInited=false;
+tabs.forEach(b=>b.addEventListener("click",()=>{
+  tabs.forEach(x=>x.classList.remove("on"));b.classList.add("on");
+  panes.forEach(p=>p.classList.remove("on"));
+  document.getElementById("pane-"+b.dataset.pane).classList.add("on");
+  window.scrollTo({top:0});
+  if(b.dataset.pane==="map"&&!mapInited)initMap();
+}));
+
+/* ================= DAYS ================= */
+const doorBtns=document.querySelectorAll(".door");
+const dayCards=document.querySelectorAll(".daycard.day");
+function showDay(d){
+  doorBtns.forEach(x=>x.classList.toggle("on",x.dataset.day===String(d)));
+  dayCards.forEach(c=>c.hidden=c.dataset.day!==String(d));
+}
+doorBtns.forEach(b=>b.addEventListener("click",()=>showDay(b.dataset.day)));
+/* auto-apertura del giorno giusto durante il viaggio */
+(function(){
+  const now=new Date();
+  const trip=[["2026-07-18",0],["2026-07-19",1],["2026-07-20",2],["2026-07-21",3],["2026-07-22",4],["2026-07-23",5]];
+  const today=now.toISOString().slice(0,10);
+  const hit=trip.find(t=>t[0]===today);
+  if(hit)showDay(hit[1]);
+})();
+
+/* ================= POI LIST ================= */
+const list=document.getElementById("poilist");
+const countEl=document.getElementById("count");
+const q=document.getElementById("q");
+let activeCat="all";
+function starOf(p){return p.cats.includes("star")?'<span class="star">⭐</span> ':""}
+function catLabels(p){
+  const m={star:"Imperdibile",kid:"Per la bimba",museo:"Museo & cultura",libri:"Dublino letteraria",pub:"Pub",fuori:"Fuori porta"};
+  return p.cats.map(c=>m[c]).join(" · ");
+}
+function render(){
+  const term=q.value.trim().toLowerCase();
+  const rows=POIS.filter(p=>{
+    const okCat=activeCat==="all"||p.cats.includes(activeCat);
+    const hay=(p.n+" "+p.why+" "+p.tip+" "+p.area+" "+catLabels(p)).toLowerCase();
+    return okCat&&(!term||hay.includes(term));
+  });
+  countEl.textContent=rows.length+" luoghi";
+  list.innerHTML=rows.map((p,i)=>`
+    <article class="poi" data-i="${POIS.indexOf(p)}">
+      <div class="head">
+        <div><h3>${starOf(p)}${p.n}</h3><div class="cats">${catLabels(p)}</div></div>
+        <div aria-hidden="true">▾</div>
+      </div>
+      <div class="body">
+        <div class="facts"><span>⏱ ${p.time}</span><span>💶 ${p.price}</span>${p.area?`<span>📍 ${p.area}</span>`:""}<span>🧒 ${"●".repeat(p.kid)||"○"} bimba</span></div>
+        <div class="why2"><b>Perché conta:</b> ${p.why}</div>
+        <div class="tip"><b>Il consiglio:</b> ${p.tip}</div>
+        <div class="actions">
+          <a href="https://maps.apple.com/?ll=${p.lat},${p.lng}&q=${encodeURIComponent(p.n)}" target="_blank" rel="noopener">Apri in Mappe →</a>
+        </div>
+      </div>
+    </article>`).join("");
+  list.querySelectorAll(".poi .head").forEach(h=>h.addEventListener("click",()=>h.parentElement.classList.toggle("open")));
+}
+document.getElementById("chips").addEventListener("click",e=>{
+  const b=e.target.closest(".chip");if(!b)return;
+  document.querySelectorAll(".chip").forEach(c=>c.classList.remove("on"));
+  b.classList.add("on");activeCat=b.dataset.cat;render();
+});
+q.addEventListener("input",render);
+render();
+
+/* ================= MAP ================= */
+function colorOf(p){
+  if(p.cats.includes("pub"))return"#c33427";
+  if(p.cats.includes("fuori"))return"#33302c";
+  if(p.cats.includes("star"))return"#a8792b";
+  if(p.cats.includes("museo")||p.cats.includes("libri"))return"#2456a6";
+  return"#2e7d4f";
+}
+function initMap(){
+  mapInited=true;
+  try{
+    if(typeof L==="undefined")throw new Error("no leaflet");
+    const map=L.map("map",{scrollWheelZoom:false}).setView([53.348,-6.263],13.4);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"© OpenStreetMap"}).addTo(map);
+    /* hotel */
+    L.circleMarker([53.3465,-6.2519],{radius:9,color:"#0b5f3b",fillColor:"#0b5f3b",fillOpacity:1,weight:2})
+      .addTo(map).bindPopup("<b>🏠 Staycity City Quay</b><br>La vostra base, Moss Street.");
+    POIS.forEach(p=>{
+      L.circleMarker([p.lat,p.lng],{radius:7,color:"#fff",weight:1.5,fillColor:colorOf(p),fillOpacity:.95})
+        .addTo(map)
+        .bindPopup(`<b>${p.n}</b><br><small>${catLabels(p)} · ${p.time}</small><br><a href="https://maps.apple.com/?ll=${p.lat},${p.lng}&q=${encodeURIComponent(p.n)}" target="_blank" rel="noopener">Apri in Mappe →</a>`);
+    });
+    setTimeout(()=>map.invalidateSize(),150);
+  }catch(err){
+    document.getElementById("mapfail").style.display="block";
+    document.getElementById("map").style.display="none";
+  }
+}
+
+/* ================= CHECKLIST ================= */
+document.querySelectorAll(".check input").forEach(i=>i.addEventListener("change",()=>{
+  i.closest(".check").classList.toggle("done",i.checked);
+}));
+</script>
+</body>
+</html>
